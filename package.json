@@ -1,0 +1,342 @@
+{
+  "name": "expressdb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "mysql": "^2.11.1"
+  }
+}
+/*
+<html>
+<head>
+    <style>
+        body
+        {
+            font-size:25px;
+        }
+    </style>
+</head>
+<body>
+<input type="text" id="Q">
+<button type="button" id="press">ADD</button>
+<button type ="button" id="clear">CLEAR</button>
+<ul id ="msg" style="list-style-type:none"></ul>
+<script src="jquery.js"></script>
+<script>
+
+
+    var largest_id=0;
+
+    $(document).ready(function()
+    {
+        $.post('/initial',function(data,status)
+        {
+              show_todos(data);
+        });
+
+    });
+
+
+
+    $("#press").click(function()
+    {
+        var object={};
+        object.value= $("#Q").val();
+        object.id = largest_id +1;
+
+        $.post('/addtodo',object,function (data , status) {
+
+            show_todos(data);
+        });
+    });
+
+
+
+    $("#clear").click( function() {
+
+        $.post('/clear',function(data,status)
+        {
+             show_todos(data);
+        });
+    });
+
+
+    function func(el)
+    {
+
+        var obj={};
+        obj.id   =  el.getAttribute('id');
+        if(el.checked)
+            obj.done = 1;
+        else obj.done = 0;
+
+        $.post('/click' ,obj , function(data,status) {
+
+             show_todos(data);
+
+        });
+    }
+
+    function show_todos(data)
+    {
+
+        var ans='';
+        if(data.length)
+        {
+            largest_id = data[0].id;
+            for(var x=0;x<data.length;x++)
+            {
+                if(data[x].done==false)
+                {
+                    ans+='<li>' + '<input type="checkbox"' + 'id="' + data[x].id + '"' + ' onclick="func(this)">' + data[x].task + '</li>';
+                }
+
+                else
+                {
+                    ans+='<li style="text-decoration:line-through">'+
+                            '<input type="checkbox"' + 'id="' + data[x].id + '"' + ' onclick="func(this)"' + 'checked' + '>' + data[x].task + '</li>';
+                }
+            }
+        }
+
+        $("#msg").html(ans);
+    }
+
+</script>
+</body>
+</html>
+
+*/
+
+
+
+
+
+/*
+
+var dbhandler = require('./dbhandler');
+var express= require('express');
+var app= express();
+var body_parser=require('body-parser');
+
+app.set('port' ,process.env.PORT || 3000);
+app.use(body_parser.urlencoded({extended : true}));
+app.use(body_parser.json());
+
+app.use('/', express.static('public'));
+
+
+app.post('/initial',function (req,res)
+{
+    res.send(myfunction());
+});
+
+app.post('/addtodo',function (req,res) {
+
+    var newtodo =
+    {
+        task : req.body.value,
+        id:req.body.id,
+        done:0
+    };
+
+    dbhandler.add_todo(newtodo , function (err,result) {
+
+        if(err)
+            console.log(err);
+        else
+            res.send(myfunction());
+    });
+
+});
+
+
+
+app.post('/click',function (req,res) {
+
+    var obj = {
+        id: req.body.id,
+        done: req.body.done
+    }
+
+
+    dbhandler.change_value(obj,function (err,result)
+    {
+        if(err)
+            console.log(err);
+
+        else
+            res.send(myfunction());
+    });
+
+
+});
+
+
+app.post('/clear',function (req,res) {
+
+    dbhandler.delete_values(function (err,result) {
+
+        if(err)
+            console.log(err);
+        else
+            res.send(myfunction());
+
+    });
+
+});
+
+
+     function myfunction() {
+
+         dbhandler.show_todos(function (err, result) {
+             if (err)
+                 console.log(err);
+             else
+                 return (result);
+         });
+     }
+
+
+app.listen(3000,function () {
+    console.log("SERVER STARTED AND LISTENING AT PORT 3000");
+});
+
+*/
+
+
+
+
+
+
+/*
+
+var connection = null;
+var mysql = require('mysql');
+
+function create_connection() {
+
+    connection = mysql.createConnection(
+        {
+            host : 'localhost',
+            user : 'todouser',
+            database : 'tododb'
+        }
+    );
+}
+
+
+function fetch_todos(call_back) {
+
+    var todolist=[];
+    create_connection();
+    connection.connect();
+    connection.query( 'SELECT * from todolist2 ORDER BY id DESC' , function (err,rows,fields)
+    {
+        if(err)
+            call_back(err,null);
+        else
+        {
+            for(var i=0;i<rows.length;i++)
+            {
+                todolist.push({
+                    id:rows[i].id,
+                    task : rows[i].task,
+                    done:rows[i].done
+                });
+            }
+            call_back(null,todolist);
+        }
+
+    });
+    connection.end();
+
+}
+
+
+function add_todo(todo,call_back) {
+
+    create_connection();
+    connection.connect();
+    const str = "INSERT INTO todolist2 VALUES (" +
+        todo.id + ", " +
+        "'" + todo.task + "', " +
+        todo.done +
+        ");";
+
+    connection.query(str,function (err,result) {
+        if(err)
+            call_back(err,null);
+
+        else
+            call_back(null,result);
+    });
+
+    connection.end();
+
+}
+
+
+
+function change_value(todo,call_back)
+{
+    create_connection();
+    connection.connect();
+    var str;
+    if(todo.done==true)
+     str = 'update todolist2 set done=1 where id=' + todo.id +';';
+    else str = 'update todolist2 set done=0 where id=' + todo.id +';';
+
+    connection.query(str,function (err,result) {
+        if(err)
+            call_back(err,null);
+
+        else
+            call_back(null,result);
+    });
+
+    connection.end();
+}
+
+
+function delete_values(call_back) {
+
+    create_connection();
+    connection.connect();
+    var str = 'delete from todolist2 where done = 1;';
+    connection.query(str,function (err,result) {
+
+        if(err)
+            call_back(err,null);
+        else call_back(null,result);
+    });
+    connection.end();
+
+}
+
+module.exports = {
+
+    show_todos : fetch_todos,
+    add_todo : add_todo,
+    change_value : change_value,
+    delete_values : delete_values
+
+};
+
+
+*/
+
+
+
+
+
+
